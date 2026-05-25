@@ -1,7 +1,7 @@
 # Ричи — план лечения
 
-Веб-приложение для отслеживания приёма лекарств собакой Ричи.
-Два пользователя могут отмечать выполнение с любых устройств — изменения
+Веб-сайт для отслеживания приёма лекарств собакой Ричи.
+Два человека отмечают выполнение с любых устройств — изменения
 синхронизируются в реальном времени через Firebase Realtime Database.
 
 ## Стек
@@ -9,7 +9,7 @@
 - **React 18 + Vite** — клиент
 - **Tailwind CSS** — стили
 - **Firebase Realtime Database** — общее хранилище + синхронизация
-- **Vercel** — хостинг
+- **GitHub Pages** — хостинг (через GitHub Actions)
 
 ## План лечения
 
@@ -24,21 +24,20 @@
 
 ```bash
 npm install
-cp .env.example .env.local   # заполните значениями из Firebase
+cp .env.example .env.local   # заполнить значениями из Firebase
 npm run dev
 ```
 
 ## Настройка Firebase (одноразово)
 
-1. Зайти на https://console.firebase.google.com → **Add project**
-   (выключить Google Analytics — не нужен)
-2. В проекте: **Build → Realtime Database → Create database**
-   - регион: `europe-west1` (или ближайший)
-   - режим: **Start in test mode** (правила открыты на 30 дней)
-3. **Project settings (шестерёнка) → Your apps → Web (`</>`)**
-   - имя: `richie-web`, регистрируем без Hosting
-   - копируем значения из объекта `firebaseConfig` в `.env.local`
-4. Правила доступа (Realtime Database → Rules):
+1. https://console.firebase.google.com → **Add project** → `richie-tracker`
+   (Google Analytics — выключить)
+2. **Build → Realtime Database → Create Database**
+   - регион: `europe-west1`
+   - **Start in test mode**
+3. **Project settings → Your apps → Web (`</>`)** → имя `richie-web`
+4. Скопировать значения из `firebaseConfig` в `.env.local`
+5. Realtime Database → **Rules**:
    ```json
    {
      "rules": {
@@ -46,25 +45,22 @@ npm run dev
      }
    }
    ```
-   Защита — секретный URL Vercel.
 
-## Деплой на Vercel
+## Деплой через GitHub Pages
 
-1. https://vercel.com → войти через GitHub
-2. **Add New → Project → Import** репозиторий `Unikumsi/treatment-tracker`
-3. Framework: Vite (определит автоматически)
-4. **Environment Variables** — вставить те же 5 переменных, что в `.env.local`
-5. **Deploy** → получим URL вида `richie-tracker.vercel.app`
-
-Этот URL открываем на телефоне, добавляем «На главный экран» — будет
-выглядеть как обычное приложение.
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions**
+2. **Settings → Secrets and variables → Actions → New repository secret**
+   — добавить 5 секретов с теми же именами, что в `.env.example`
+3. Любой push в `main` запускает `.github/workflows/deploy.yml`,
+   собирает Vite и публикует на `https://<user>.github.io/treatment-tracker/`
 
 ## Структура
 
 ```
+.github/workflows/deploy.yml — CI: сборка и деплой на GitHub Pages
 src/
-  TreatmentTracker.jsx   — главный компонент
-  firebase.js            — подписка/запись в Realtime Database
-  main.jsx               — точка входа
-  index.css              — Tailwind
+  TreatmentTracker.jsx       — главный компонент
+  firebase.js                — подписка/запись в Realtime Database
+  main.jsx                   — точка входа
+  index.css                  — Tailwind
 ```
