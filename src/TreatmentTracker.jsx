@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Check, ChevronLeft, ChevronRight, RotateCcw, Droplets, Eye, Syringe, Pill, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Check, ChevronLeft, ChevronRight, RotateCcw, Droplets, Eye, Syringe, Pill, Sparkles, Cloud, CloudOff } from 'lucide-react';
+import { subscribeToData, saveDataToCloud } from './firebase';
 
 const PLAN_START = new Date(2026, 4, 25); // 25 мая 2026
 const PLAN_DAYS = 10;
-const STORAGE_KEY = 'treatment-tracker-v1';
 
 const medications = [
   {
@@ -75,36 +75,26 @@ export default function TreatmentTracker() {
   const [data, setData] = useState({});
   const [currentDay, setCurrentDay] = useState(getTodayIndex());
   const [confirmReset, setConfirmReset] = useState(false);
-  const [celebrated, setCelebrated] = useState({});
+  const [connected, setConnected] = useState(false);
+  const remoteEcho = useRef(null);
 
   useEffect(() => {
-    const loadFromStorage = async () => {
-      try {
-        const result = await window.storage.get(STORAGE_KEY, true);
-        if (result?.value) setData(JSON.parse(result.value));
-      } catch (e) {
-        // нет сохранённых данных — это нормально
-      }
-    };
-    loadFromStorage();
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') loadFromStorage();
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    window.addEventListener('focus', loadFromStorage);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible);
-      window.removeEventListener('focus', loadFromStorage);
-    };
+    const unsub = subscribeToData((cloudData) => {
+      setConnected(true);
+      remoteEcho.current = JSON.stringify(cloudData);
+      setData(cloudData);
+    });
+    return () => unsub && unsub();
   }, []);
 
-  const saveData = async (newData) => {
+  const saveData = (newData) => {
     setData(newData);
-    try {
-      await window.storage.set(STORAGE_KEY, JSON.stringify(newData), true);
-    } catch (e) {
+    const serialized = JSON.stringify(newData);
+    if (serialized === remoteEcho.current) return;
+    remoteEcho.current = serialized;
+    saveDataToCloud(newData).catch((e) => {
       console.error('Не удалось сохранить', e);
-    }
+    });
   };
 
   const dayKey = String(currentDay);
@@ -116,7 +106,7 @@ export default function TreatmentTracker() {
     if (!newData[dayKey][medId]) newData[dayKey][medId] = [];
     const arr = [...newData[dayKey][medId]];
     arr[doseIdx] = !arr[doseIdx];
-    newData[dayKey][medId] = arr;
+    newData[dayKey] = { ...newData[dayKey], [medId]: arr };
     saveData(newData);
   };
 
@@ -138,12 +128,11 @@ export default function TreatmentTracker() {
   const todayIdx = getTodayIndex();
   const isToday = currentDay === todayIdx;
 
-  const reset = async () => {
-    await saveData({});
+  const reset = () => {
+    saveData({});
     setConfirmReset(false);
   };
 
-  // Прогресс по всем дням для мини-полоски сверху
   const allDaysProgress = Array.from({ length: PLAN_DAYS }, (_, i) => {
     const dd = data[String(i)] || {};
     let done = 0;
@@ -156,14 +145,21 @@ export default function TreatmentTracker() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50 to-white pb-12">
-      {/* Заголовок */}
       <div className="bg-white/80 backdrop-blur border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3.5">
           <div className="flex items-baseline justify-between">
-            <h1 className="text-lg font-bold text-slate-800">План лечения</h1>
-            <span className="text-xs text-slate-400">10 дней</span>
+            <h1 className="text-lg font-bold text-slate-800 flex items-center gap-1.5">
+              🐶 Ричи
+              <span className="text-xs font-normal text-slate-400 ml-1">план лечения</span>
+            </h1>
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              {connected ? (
+                <><Cloud className="w-3 h-3 text-emerald-500" /> синхр.</>
+              ) : (
+                <><CloudOff className="w-3 h-3" /> офлайн</>
+              )}
+            </span>
           </div>
-          {/* Полоска прогресса по всем дням */}
           <div className="mt-3 flex gap-1">
             {allDaysProgress.map((p, i) => (
               <button
@@ -187,7 +183,6 @@ export default function TreatmentTracker() {
       </div>
 
       <div className="max-w-md mx-auto px-4">
-        {/* Навигация по дням */}
         <div className="mt-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
           <div className="flex items-center justify-between">
             <button
@@ -218,7 +213,6 @@ export default function TreatmentTracker() {
             </button>
           </div>
 
-          {/* Полоска прогресса дня */}
           <div className="mt-4">
             <div className="flex items-center justify-between text-xs mb-1.5">
               <span className="text-slate-500">Прогресс дня</span>
@@ -239,14 +233,13 @@ export default function TreatmentTracker() {
           </div>
 
           {dayFullyDone && (
-            <div className="mt-3 flex items-center justify-center gap-1.5 text-emerald-600 text-sm font-medium animate-in fade-in">
+            <div className="mt-3 flex items-center justify-center gap-1.5 text-emerald-600 text-sm font-medium">
               <Sparkles className="w-4 h-4" />
               Все процедуры на сегодня выполнены
             </div>
           )}
         </div>
 
-        {/* Карточки лекарств */}
         <div className="mt-4 space-y-3">
           {medications.map((med, idx) => {
             const c = colors[med.color];
@@ -286,7 +279,6 @@ export default function TreatmentTracker() {
                     </div>
                   </div>
 
-                  {/* Чекбоксы доз */}
                   <div className="flex gap-2 mt-3.5">
                     {Array.from({ length: med.dosesPerDay }).map((_, i) => {
                       const checked = isChecked(med.id, i);
@@ -312,7 +304,6 @@ export default function TreatmentTracker() {
           })}
         </div>
 
-        {/* Сброс */}
         <div className="mt-8 flex justify-center">
           {!confirmReset ? (
             <button
