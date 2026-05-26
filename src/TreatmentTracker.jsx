@@ -25,7 +25,7 @@ const medications = [
   },
   {
     id: 3,
-    name: 'Здак',
+    name: 'Зодак',
     detail: '0,1 мл через шприц в пасть',
     dosesPerDay: 1,
     icon: Syringe,
@@ -33,7 +33,7 @@ const medications = [
   },
   {
     id: 4,
-    name: 'Прококолин',
+    name: 'ПроКолин',
     detail: 'Пребиотик, по 1 мл',
     dosesPerDay: 2,
     icon: Pill,
