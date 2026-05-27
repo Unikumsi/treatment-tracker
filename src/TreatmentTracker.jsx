@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, ChevronLeft, ChevronRight, RotateCcw, Droplets, Eye, Syringe, Pill, Tablets, Bone, TestTube, Sparkles, Cloud, CloudOff, CalendarDays } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Droplets, Eye, Syringe, Pill, Tablets, Bone, TestTube, Sparkles, Cloud, CloudOff, CalendarDays } from 'lucide-react';
 import { subscribeToData, saveDataToCloud } from './firebase';
 
 const PLAN_START = new Date(2026, 4, 25); // 25 мая 2026
@@ -159,7 +159,6 @@ function nearestScheduledDay(reference) {
 export default function TreatmentTracker() {
   const [data, setData] = useState({});
   const [currentDay, setCurrentDay] = useState(() => nearestScheduledDay(getTodayIndex()));
-  const [confirmReset, setConfirmReset] = useState(false);
   const [connected, setConnected] = useState(false);
   const remoteEcho = useRef(null);
 
@@ -224,11 +223,6 @@ export default function TreatmentTracker() {
     if (currentScheduledIdx >= 0 && currentScheduledIdx < SCHEDULED_DAYS.length - 1) {
       setCurrentDay(SCHEDULED_DAYS[currentScheduledIdx + 1]);
     }
-  };
-
-  const reset = () => {
-    saveData({});
-    setConfirmReset(false);
   };
 
   // Прокручиваемое окно мини-полосок: VISIBLE_BARS «рабочих» дней вокруг currentDay
@@ -436,33 +430,6 @@ export default function TreatmentTracker() {
           })}
         </div>
 
-        <div className="mt-8 flex justify-center">
-          {!confirmReset ? (
-            <button
-              onClick={() => setConfirmReset(true)}
-              className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1.5 transition py-2 px-3"
-            >
-              <RotateCcw className="w-3 h-3" />
-              Сбросить весь прогресс
-            </button>
-          ) : (
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full p-1 shadow-sm">
-              <span className="text-xs text-slate-600 pl-3">Точно сбросить?</span>
-              <button
-                onClick={reset}
-                className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-full font-medium hover:bg-red-600 transition"
-              >
-                Да, сбросить
-              </button>
-              <button
-                onClick={() => setConfirmReset(false)}
-                className="text-xs text-slate-500 px-2 py-1.5 hover:text-slate-700 transition"
-              >
-                Отмена
-              </button>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
