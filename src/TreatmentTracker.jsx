@@ -53,7 +53,7 @@ const medications = [
     name: 'Фебтал',
     detail: 'Вет. препарат, по ½ таблетки',
     dosesPerDay: 1,
-    startDay: 1, // с 26 мая
+    startDay: 2, // 27–31 мая
     durationDays: 5,
     icon: Tablets,
     color: 'rose',
