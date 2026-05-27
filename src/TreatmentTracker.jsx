@@ -140,9 +140,25 @@ function isMedActiveOnDay(med, dayIndex) {
   return dayIndex < med.startDay + (med.durationDays || 1);
 }
 
+// Список всех дней, где есть хотя бы одна процедура. Пустые дни пропускаются.
+const SCHEDULED_DAYS = (() => {
+  const days = [];
+  for (let i = 0; i < PLAN_DAYS; i++) {
+    if (medications.some((m) => isMedActiveOnDay(m, i))) days.push(i);
+  }
+  return days;
+})();
+
+// Ближайший «рабочий» день на/после reference (или последний, если все позади).
+function nearestScheduledDay(reference) {
+  if (SCHEDULED_DAYS.length === 0) return 0;
+  const next = SCHEDULED_DAYS.find((d) => d >= reference);
+  return next !== undefined ? next : SCHEDULED_DAYS[SCHEDULED_DAYS.length - 1];
+}
+
 export default function TreatmentTracker() {
   const [data, setData] = useState({});
-  const [currentDay, setCurrentDay] = useState(getTodayIndex());
+  const [currentDay, setCurrentDay] = useState(() => nearestScheduledDay(getTodayIndex()));
   const [confirmReset, setConfirmReset] = useState(false);
   const [connected, setConnected] = useState(false);
   const remoteEcho = useRef(null);
@@ -196,27 +212,39 @@ export default function TreatmentTracker() {
 
   const dayDate = addDays(PLAN_START, currentDay);
   const todayIdx = getTodayIndex();
+  const effectiveTodayIdx = nearestScheduledDay(todayIdx);
   const isToday = currentDay === todayIdx;
+  const currentScheduledIdx = SCHEDULED_DAYS.indexOf(currentDay);
+  const isFirstScheduled = currentScheduledIdx <= 0;
+  const isLastScheduled = currentScheduledIdx >= SCHEDULED_DAYS.length - 1;
+  const goToPrev = () => {
+    if (currentScheduledIdx > 0) setCurrentDay(SCHEDULED_DAYS[currentScheduledIdx - 1]);
+  };
+  const goToNext = () => {
+    if (currentScheduledIdx >= 0 && currentScheduledIdx < SCHEDULED_DAYS.length - 1) {
+      setCurrentDay(SCHEDULED_DAYS[currentScheduledIdx + 1]);
+    }
+  };
 
   const reset = () => {
     saveData({});
     setConfirmReset(false);
   };
 
-  // Прокручиваемое окно мини-полосок: VISIBLE_BARS дней, currentDay в центре
+  // Прокручиваемое окно мини-полосок: VISIBLE_BARS «рабочих» дней вокруг currentDay
   const windowStart = Math.max(
     0,
-    Math.min(PLAN_DAYS - VISIBLE_BARS, currentDay - Math.floor(VISIBLE_BARS / 2))
+    Math.min(
+      Math.max(0, SCHEDULED_DAYS.length - VISIBLE_BARS),
+      currentScheduledIdx - Math.floor(VISIBLE_BARS / 2)
+    )
   );
-  const visibleDays = Array.from(
-    { length: Math.min(VISIBLE_BARS, PLAN_DAYS - windowStart) },
-    (_, i) => windowStart + i
-  );
+  const visibleDays = SCHEDULED_DAYS.slice(windowStart, windowStart + VISIBLE_BARS);
 
   const progressForDay = (i) => {
     const dd = data[String(i)] || {};
     const active = medications.filter((m) => isMedActiveOnDay(m, i));
-    if (active.length === 0) return null; // нет препаратов на этот день
+    if (active.length === 0) return 0;
     let total = 0, done = 0;
     active.forEach((m) => {
       total += m.dosesPerDay;
@@ -246,7 +274,6 @@ export default function TreatmentTracker() {
           <div className="mt-3 flex gap-1">
             {visibleDays.map((i) => {
               const p = progressForDay(i);
-              const empty = p === null;
               return (
                 <button
                   key={i}
@@ -257,12 +284,10 @@ export default function TreatmentTracker() {
                   aria-label={`День ${i + 1}`}
                 >
                   <div className="w-full h-full bg-slate-200 relative">
-                    {!empty && (
-                      <div
-                        className={`h-full transition-all ${p === 1 ? 'bg-emerald-500' : 'bg-slate-400'}`}
-                        style={{ width: `${p * 100}%` }}
-                      />
-                    )}
+                    <div
+                      className={`h-full transition-all ${p === 1 ? 'bg-emerald-500' : 'bg-slate-400'}`}
+                      style={{ width: `${p * 100}%` }}
+                    />
                   </div>
                 </button>
               );
@@ -275,8 +300,8 @@ export default function TreatmentTracker() {
         <div className="mt-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setCurrentDay(Math.max(0, currentDay - 1))}
-              disabled={currentDay === 0}
+              onClick={goToPrev}
+              disabled={isFirstScheduled}
               className="w-10 h-10 rounded-full bg-slate-100 disabled:opacity-30 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center"
             >
               <ChevronLeft className="w-5 h-5 text-slate-700" />
@@ -294,22 +319,22 @@ export default function TreatmentTracker() {
             </div>
 
             <button
-              onClick={() => setCurrentDay(Math.min(PLAN_DAYS - 1, currentDay + 1))}
-              disabled={currentDay === PLAN_DAYS - 1}
+              onClick={goToNext}
+              disabled={isLastScheduled}
               className="w-10 h-10 rounded-full bg-slate-100 disabled:opacity-30 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center"
             >
               <ChevronRight className="w-5 h-5 text-slate-700" />
             </button>
           </div>
 
-          {!isToday && (
+          {currentDay !== effectiveTodayIdx && (
             <div className="mt-3 flex justify-center">
               <button
-                onClick={() => setCurrentDay(todayIdx)}
+                onClick={() => setCurrentDay(effectiveTodayIdx)}
                 className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 bg-slate-50 hover:bg-slate-100 rounded-full px-3 py-1 transition"
               >
                 <CalendarDays className="w-3 h-3" />
-                Перейти к сегодня
+                {effectiveTodayIdx === todayIdx ? 'Перейти к сегодня' : 'К ближайшему дню'}
               </button>
             </div>
           )}
