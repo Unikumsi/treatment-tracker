@@ -46,27 +46,25 @@ const vaccinations = [
     name: 'Nobivac KC',
     series: 'A159D01',
     expiry: '04.2026',
-    validFrom: '10.03.2026',
-    validUntil: '10.03.2027',
+    validFrom: '20.03.2026',
   },
   {
     name: 'Мультикан-6',
     series: '№3',
     expiry: '07.2027',
     validFrom: '12.04.2026',
-    validUntil: '12.04.2027',
   },
   {
     name: 'Мультикан-8',
     series: '№1',
     expiry: '07.2027',
-    validFrom: '10.05.2026',
-    validUntil: '10.05.2027',
+    validFrom: '20.05.2026',
+    validUntil: '20.05.2027',
   },
 ];
 
 const deworming = [
-  { date: '09.04.2026', name: 'Фенпраз' },
+  { date: '02.04.2026', name: 'Фенпраз' },
 ];
 
 function Section({ title, children }) {
@@ -115,7 +113,7 @@ export default function Passport() {
               <div className="flex items-start justify-between gap-3">
                 <div className="text-sm font-semibold text-slate-800 leading-tight">{v.name}</div>
                 <div className="text-[11px] text-slate-500 tabular-nums whitespace-nowrap pt-0.5">
-                  {v.validFrom} — {v.validUntil}
+                  {v.validUntil ? `${v.validFrom} — ${v.validUntil}` : v.validFrom}
                 </div>
               </div>
               {v.note && <div className="text-xs text-slate-500 mt-1">{v.note}</div>}
