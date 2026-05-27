@@ -2,7 +2,7 @@ const info = [
   { label: 'Кличка', value: 'Ричи' },
   { label: 'Пол', value: 'Кобель' },
   { label: 'Окрас', value: 'Ред-браун' },
-  { label: 'Татуировка', value: 'ЕВР 7452' },
+  { label: 'Клеймо', value: 'E6P7452' },
 ];
 
 const vaccinations = [
