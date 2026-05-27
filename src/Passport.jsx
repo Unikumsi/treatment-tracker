@@ -1,9 +1,45 @@
-const info = [
-  { label: 'Кличка', value: 'Ричи' },
-  { label: 'Пол', value: 'Кобель' },
-  { label: 'Окрас', value: 'Ред-браун' },
-  { label: 'Клеймо', value: 'E6P7452' },
-];
+const BIRTH_DATE = new Date(2026, 1, 12); // 12 февраля 2026
+
+function formatAge(birth) {
+  const now = new Date();
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+  let days = now.getDate() - birth.getDate();
+  if (days < 0) {
+    months -= 1;
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  const parts = [];
+  if (years > 0) parts.push(`${years} ${plural(years, 'год', 'года', 'лет')}`);
+  if (months > 0) parts.push(`${months} ${plural(months, 'месяц', 'месяца', 'месяцев')}`);
+  if (years === 0 && months < 2 && days > 0) parts.push(`${days} ${plural(days, 'день', 'дня', 'дней')}`);
+  return parts.join(' ') || 'менее суток';
+}
+
+function plural(n, one, few, many) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
+function buildInfo() {
+  return [
+    { label: 'Кличка', value: 'Ричи' },
+    { label: 'Порода', value: 'Той-пудель' },
+    { label: 'Пол', value: 'Кобель' },
+    { label: 'Окрас', value: 'Ред-браун' },
+    { label: 'Дата рождения', value: '12.02.2026' },
+    { label: 'Возраст', value: formatAge(BIRTH_DATE) },
+    { label: 'Клеймо', value: 'E6P7452' },
+  ];
+}
 
 const vaccinations = [
   { date: '10.03.2026', name: 'Nobivac KC', note: 'питомниковый кашель' },
@@ -25,6 +61,7 @@ function Section({ title, children }) {
 }
 
 export default function Passport() {
+  const info = buildInfo();
   return (
     <div className="max-w-md mx-auto px-4">
       {/* Шапка */}
