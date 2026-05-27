@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Check, ChevronLeft, ChevronRight, Droplets, Eye, Syringe, Pill, Tablets, Bone, TestTube, Sparkles, Cloud, CloudOff, CalendarDays } from 'lucide-react';
 import { subscribeToData, saveDataToCloud } from './firebase';
 import Passport from './Passport.jsx';
+import Analyses from './Analyses.jsx';
 
 const PLAN_START = new Date(2026, 4, 25); // 25 мая 2026
 const PLAN_DAYS = 730; // ~2 года вперёд (для повторяющихся препаратов)
@@ -274,7 +275,7 @@ export default function TreatmentTracker() {
                 tab === 'plan' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
               }`}
             >
-              План лечения
+              План
             </button>
             <button
               onClick={() => setTab('passport')}
@@ -283,6 +284,14 @@ export default function TreatmentTracker() {
               }`}
             >
               Паспорт
+            </button>
+            <button
+              onClick={() => setTab('analyses')}
+              className={`flex-1 text-xs font-medium py-1.5 rounded-full transition ${
+                tab === 'analyses' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
+              }`}
+            >
+              Анализы
             </button>
           </div>
 
@@ -314,6 +323,7 @@ export default function TreatmentTracker() {
       </div>
 
       {tab === 'passport' && <Passport />}
+      {tab === 'analyses' && <Analyses />}
 
       {tab === 'plan' && <div className="max-w-md mx-auto px-4">
         <div className="mt-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
