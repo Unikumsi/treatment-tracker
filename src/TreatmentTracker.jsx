@@ -12,7 +12,7 @@ const medications = [
     name: 'Промывание глаз',
     detail: 'Физ. раствор, от внешнего к внутреннему уголку',
     note: 'После 10 дней — продолжать постоянно',
-    dosesPerDay: 5,
+    dosesPerDay: 4,
     startDay: 0,
     durationDays: 10,
     icon: Droplets,
