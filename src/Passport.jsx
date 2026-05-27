@@ -42,9 +42,29 @@ function buildInfo() {
 }
 
 const vaccinations = [
-  { date: '10.03.2026', name: 'Nobivac KC', note: 'питомниковый кашель' },
-  { date: '12.04.2026', name: 'Мультикан-3' },
-  { date: '10.05.2026', name: 'Мультикан-8', note: 'комплексная' },
+  {
+    name: 'Nobivac KC',
+    series: 'A159991',
+    expiry: '04.2026',
+    validFrom: '10.03.2026',
+    validUntil: '10.03.2027',
+    note: 'питомниковый кашель',
+  },
+  {
+    name: 'Мультикан-6',
+    series: '№3',
+    expiry: '07.2027',
+    validFrom: '12.04.2026',
+    validUntil: '12.04.2027',
+  },
+  {
+    name: 'Мультикан-8',
+    series: '№1',
+    expiry: '07.2027',
+    validFrom: '10.05.2026',
+    validUntil: '10.05.2027',
+    note: 'комплексная',
+  },
 ];
 
 const deworming = [
@@ -91,14 +111,19 @@ export default function Passport() {
 
       {/* Прививки */}
       <Section title="Прививки">
-        <ul className="space-y-2.5">
+        <ul className="divide-y divide-slate-100">
           {vaccinations.map((v) => (
-            <li key={v.date + v.name} className="flex items-start justify-between gap-3">
-              <div>
+            <li key={v.validFrom + v.name} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex items-start justify-between gap-3">
                 <div className="text-sm font-semibold text-slate-800 leading-tight">{v.name}</div>
-                {v.note && <div className="text-xs text-slate-500 mt-0.5">{v.note}</div>}
+                <div className="text-[11px] text-slate-500 tabular-nums whitespace-nowrap pt-0.5">
+                  {v.validFrom} — {v.validUntil}
+                </div>
               </div>
-              <div className="text-xs text-slate-500 tabular-nums whitespace-nowrap pt-0.5">{v.date}</div>
+              {v.note && <div className="text-xs text-slate-500 mt-1">{v.note}</div>}
+              <div className="text-[11px] text-slate-400 mt-1">
+                Серия {v.series} · срок годности {v.expiry}
+              </div>
             </li>
           ))}
         </ul>
