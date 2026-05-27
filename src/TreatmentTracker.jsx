@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, ChevronLeft, ChevronRight, RotateCcw, Droplets, Eye, Syringe, Pill, Sparkles, Cloud, CloudOff } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, RotateCcw, Droplets, Eye, Syringe, Pill, Tablets, Sparkles, Cloud, CloudOff } from 'lucide-react';
 import { subscribeToData, saveDataToCloud } from './firebase';
 
 const PLAN_START = new Date(2026, 4, 25); // 25 мая 2026
@@ -12,6 +12,8 @@ const medications = [
     detail: 'Физ. раствор, от внешнего к внутреннему уголку',
     note: 'После 10 дней — продолжать постоянно',
     dosesPerDay: 5,
+    startDay: 0,
+    durationDays: 10,
     icon: Droplets,
     color: 'sky',
   },
@@ -20,6 +22,8 @@ const medications = [
     name: 'Данцил',
     detail: 'Глазные капли, по 1 капле',
     dosesPerDay: 4,
+    startDay: 0,
+    durationDays: 10,
     icon: Eye,
     color: 'indigo',
   },
@@ -28,6 +32,8 @@ const medications = [
     name: 'Зодак',
     detail: '0,1 мл через шприц в пасть',
     dosesPerDay: 1,
+    startDay: 0,
+    durationDays: 10,
     icon: Syringe,
     color: 'amber',
   },
@@ -36,16 +42,33 @@ const medications = [
     name: 'ПроКолин',
     detail: 'Пребиотик, по 1 мл',
     dosesPerDay: 2,
+    startDay: 0,
+    durationDays: 10,
     icon: Pill,
     color: 'emerald',
   },
+  {
+    id: 5,
+    name: 'Фебтал',
+    detail: 'Вет. препарат, по ½ таблетки',
+    dosesPerDay: 1,
+    startDay: 1, // с 26 мая
+    durationDays: 5,
+    icon: Tablets,
+    color: 'rose',
+  },
 ];
+
+function isMedActiveOnDay(med, dayIndex) {
+  return dayIndex >= med.startDay && dayIndex < med.startDay + med.durationDays;
+}
 
 const colors = {
   sky:     { soft: 'bg-sky-50',     softer: 'bg-sky-100/60',     text: 'text-sky-700',     border: 'border-sky-200',     solid: 'bg-sky-500',     ring: 'ring-sky-200' },
   indigo:  { soft: 'bg-indigo-50',  softer: 'bg-indigo-100/60',  text: 'text-indigo-700',  border: 'border-indigo-200',  solid: 'bg-indigo-500',  ring: 'ring-indigo-200' },
   amber:   { soft: 'bg-amber-50',   softer: 'bg-amber-100/60',   text: 'text-amber-700',   border: 'border-amber-200',   solid: 'bg-amber-500',   ring: 'ring-amber-200' },
   emerald: { soft: 'bg-emerald-50', softer: 'bg-emerald-100/60', text: 'text-emerald-700', border: 'border-emerald-200', solid: 'bg-emerald-500', ring: 'ring-emerald-200' },
+  rose:    { soft: 'bg-rose-50',    softer: 'bg-rose-100/60',    text: 'text-rose-700',    border: 'border-rose-200',    solid: 'bg-rose-500',    ring: 'ring-rose-200' },
 };
 
 function addDays(date, days) {
@@ -119,10 +142,11 @@ export default function TreatmentTracker() {
     return n;
   };
 
-  const dayTotalDoses = medications.reduce((s, m) => s + m.dosesPerDay, 0);
-  const dayCompleted = medications.reduce((s, m) => s + medCompleted(m), 0);
-  const dayPercent = Math.round((dayCompleted / dayTotalDoses) * 100);
-  const dayFullyDone = dayCompleted === dayTotalDoses;
+  const activeMeds = medications.filter((m) => isMedActiveOnDay(m, currentDay));
+  const dayTotalDoses = activeMeds.reduce((s, m) => s + m.dosesPerDay, 0);
+  const dayCompleted = activeMeds.reduce((s, m) => s + medCompleted(m), 0);
+  const dayPercent = dayTotalDoses === 0 ? 0 : Math.round((dayCompleted / dayTotalDoses) * 100);
+  const dayFullyDone = dayTotalDoses > 0 && dayCompleted === dayTotalDoses;
 
   const dayDate = addDays(PLAN_START, currentDay);
   const todayIdx = getTodayIndex();
@@ -135,12 +159,15 @@ export default function TreatmentTracker() {
 
   const allDaysProgress = Array.from({ length: PLAN_DAYS }, (_, i) => {
     const dd = data[String(i)] || {};
-    let done = 0;
-    medications.forEach(m => {
+    const active = medications.filter((m) => isMedActiveOnDay(m, i));
+    if (active.length === 0) return 0;
+    let total = 0, done = 0;
+    active.forEach((m) => {
+      total += m.dosesPerDay;
       const arr = dd[m.id] || [];
       for (let j = 0; j < m.dosesPerDay; j++) if (arr[j]) done++;
     });
-    return done / dayTotalDoses;
+    return total === 0 ? 0 : done / total;
   });
 
   return (
@@ -241,7 +268,7 @@ export default function TreatmentTracker() {
         </div>
 
         <div className="mt-4 space-y-3">
-          {medications.map((med, idx) => {
+          {activeMeds.map((med, idx) => {
             const c = colors[med.color];
             const Icon = med.icon;
             const done = medCompleted(med);
