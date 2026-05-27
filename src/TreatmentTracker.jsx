@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Check, ChevronLeft, ChevronRight, Droplets, Eye, Syringe, Pill, Tablets, Bone, TestTube, Sparkles, Cloud, CloudOff, CalendarDays } from 'lucide-react';
 import { subscribeToData, saveDataToCloud } from './firebase';
+import Passport from './Passport.jsx';
 
 const PLAN_START = new Date(2026, 4, 25); // 25 мая 2026
 const PLAN_DAYS = 730; // ~2 года вперёд (для повторяющихся препаратов)
@@ -160,6 +161,7 @@ export default function TreatmentTracker() {
   const [data, setData] = useState({});
   const [currentDay, setCurrentDay] = useState(() => nearestScheduledDay(getTodayIndex()));
   const [connected, setConnected] = useState(false);
+  const [tab, setTab] = useState('plan');
   const remoteEcho = useRef(null);
 
   useEffect(() => {
@@ -255,7 +257,6 @@ export default function TreatmentTracker() {
           <div className="flex items-baseline justify-between">
             <h1 className="text-lg font-bold text-slate-800 flex items-center gap-1.5">
               🐶 Ричи
-              <span className="text-xs font-normal text-slate-400 ml-1">план лечения</span>
             </h1>
             <span className="flex items-center gap-1 text-xs text-slate-400">
               {connected ? (
@@ -265,32 +266,56 @@ export default function TreatmentTracker() {
               )}
             </span>
           </div>
-          <div className="mt-3 flex gap-1">
-            {visibleDays.map((i) => {
-              const p = progressForDay(i);
-              return (
-                <button
-                  key={i}
-                  onClick={() => setCurrentDay(i)}
-                  className={`flex-1 h-1.5 rounded-full overflow-hidden transition ${
-                    i === currentDay ? 'ring-2 ring-slate-400 ring-offset-1' : ''
-                  }`}
-                  aria-label={`День ${i + 1}`}
-                >
-                  <div className="w-full h-full bg-slate-200 relative">
-                    <div
-                      className={`h-full transition-all ${p === 1 ? 'bg-emerald-500' : 'bg-slate-400'}`}
-                      style={{ width: `${p * 100}%` }}
-                    />
-                  </div>
-                </button>
-              );
-            })}
+
+          <div className="mt-3 flex gap-1 bg-slate-100 p-1 rounded-full">
+            <button
+              onClick={() => setTab('plan')}
+              className={`flex-1 text-xs font-medium py-1.5 rounded-full transition ${
+                tab === 'plan' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
+              }`}
+            >
+              План лечения
+            </button>
+            <button
+              onClick={() => setTab('passport')}
+              className={`flex-1 text-xs font-medium py-1.5 rounded-full transition ${
+                tab === 'passport' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
+              }`}
+            >
+              Паспорт
+            </button>
           </div>
+
+          {tab === 'plan' && (
+            <div className="mt-3 flex gap-1">
+              {visibleDays.map((i) => {
+                const p = progressForDay(i);
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentDay(i)}
+                    className={`flex-1 h-1.5 rounded-full overflow-hidden transition ${
+                      i === currentDay ? 'ring-2 ring-slate-400 ring-offset-1' : ''
+                    }`}
+                    aria-label={`День ${i + 1}`}
+                  >
+                    <div className="w-full h-full bg-slate-200 relative">
+                      <div
+                        className={`h-full transition-all ${p === 1 ? 'bg-emerald-500' : 'bg-slate-400'}`}
+                        style={{ width: `${p * 100}%` }}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4">
+      {tab === 'passport' && <Passport />}
+
+      {tab === 'plan' && <div className="max-w-md mx-auto px-4">
         <div className="mt-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
           <div className="flex items-center justify-between">
             <button
@@ -430,7 +455,7 @@ export default function TreatmentTracker() {
           })}
         </div>
 
-      </div>
+      </div>}
     </div>
   );
 }
