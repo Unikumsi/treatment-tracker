@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, ChevronLeft, ChevronRight, RotateCcw, Droplets, Eye, Syringe, Pill, Tablets, Sparkles, Cloud, CloudOff } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, RotateCcw, Droplets, Eye, Syringe, Pill, Tablets, Bone, TestTube, Sparkles, Cloud, CloudOff, CalendarDays } from 'lucide-react';
 import { subscribeToData, saveDataToCloud } from './firebase';
 
 const PLAN_START = new Date(2026, 4, 25); // 25 мая 2026
-const PLAN_DAYS = 10;
+const PLAN_DAYS = 730; // ~2 года вперёд (для повторяющихся препаратов)
+const VISIBLE_BARS = 10; // сколько мини-полосок показывать сверху
 
 const medications = [
   {
@@ -57,11 +58,29 @@ const medications = [
     icon: Tablets,
     color: 'rose',
   },
+  {
+    id: 6,
+    name: 'Мильбимакс',
+    detail: 'Антигельминтик, 1 таблетка',
+    note: 'Повторять каждые 3 месяца',
+    dosesPerDay: 1,
+    startDay: 12, // 6 июня 2026 (через 10 дней от 27 мая)
+    durationDays: 1,
+    recurMonths: 3,
+    icon: Bone,
+    color: 'violet',
+  },
+  {
+    id: 7,
+    name: 'Анализ',
+    detail: 'Сдать анализ',
+    dosesPerDay: 1,
+    startDay: 12, // 6 июня 2026
+    durationDays: 1,
+    icon: TestTube,
+    color: 'teal',
+  },
 ];
-
-function isMedActiveOnDay(med, dayIndex) {
-  return dayIndex >= med.startDay && dayIndex < med.startDay + med.durationDays;
-}
 
 const colors = {
   sky:     { soft: 'bg-sky-50',     softer: 'bg-sky-100/60',     text: 'text-sky-700',     border: 'border-sky-200',     solid: 'bg-sky-500',     ring: 'ring-sky-200' },
@@ -69,6 +88,8 @@ const colors = {
   amber:   { soft: 'bg-amber-50',   softer: 'bg-amber-100/60',   text: 'text-amber-700',   border: 'border-amber-200',   solid: 'bg-amber-500',   ring: 'ring-amber-200' },
   emerald: { soft: 'bg-emerald-50', softer: 'bg-emerald-100/60', text: 'text-emerald-700', border: 'border-emerald-200', solid: 'bg-emerald-500', ring: 'ring-emerald-200' },
   rose:    { soft: 'bg-rose-50',    softer: 'bg-rose-100/60',    text: 'text-rose-700',    border: 'border-rose-200',    solid: 'bg-rose-500',    ring: 'ring-rose-200' },
+  violet:  { soft: 'bg-violet-50',  softer: 'bg-violet-100/60',  text: 'text-violet-700',  border: 'border-violet-200',  solid: 'bg-violet-500',  ring: 'ring-violet-200' },
+  teal:    { soft: 'bg-teal-50',    softer: 'bg-teal-100/60',    text: 'text-teal-700',    border: 'border-teal-200',    solid: 'bg-teal-500',    ring: 'ring-teal-200' },
 };
 
 function addDays(date, days) {
@@ -92,6 +113,31 @@ function formatDate(d) {
 
 function formatWeekday(d) {
   return d.toLocaleDateString('ru-RU', { weekday: 'long' });
+}
+
+function isMedActiveOnDay(med, dayIndex) {
+  if (dayIndex < med.startDay) return false;
+
+  // Повторение по месяцам (например, Мильбимакс каждые 3 месяца)
+  if (med.recurMonths) {
+    const dayDate = addDays(PLAN_START, dayIndex);
+    const startDate = addDays(PLAN_START, med.startDay);
+    if (dayDate.getDate() !== startDate.getDate()) return false;
+    const monthDiff =
+      (dayDate.getFullYear() - startDate.getFullYear()) * 12 +
+      (dayDate.getMonth() - startDate.getMonth());
+    if (monthDiff < 0) return false;
+    return monthDiff % med.recurMonths === 0;
+  }
+
+  // Повторение каждые N дней
+  if (med.recurEveryDays) {
+    const cycle = (dayIndex - med.startDay) % med.recurEveryDays;
+    return cycle < (med.durationDays || 1);
+  }
+
+  // Разовое окно [startDay, startDay+durationDays)
+  return dayIndex < med.startDay + (med.durationDays || 1);
 }
 
 export default function TreatmentTracker() {
@@ -157,10 +203,20 @@ export default function TreatmentTracker() {
     setConfirmReset(false);
   };
 
-  const allDaysProgress = Array.from({ length: PLAN_DAYS }, (_, i) => {
+  // Прокручиваемое окно мини-полосок: VISIBLE_BARS дней, currentDay в центре
+  const windowStart = Math.max(
+    0,
+    Math.min(PLAN_DAYS - VISIBLE_BARS, currentDay - Math.floor(VISIBLE_BARS / 2))
+  );
+  const visibleDays = Array.from(
+    { length: Math.min(VISIBLE_BARS, PLAN_DAYS - windowStart) },
+    (_, i) => windowStart + i
+  );
+
+  const progressForDay = (i) => {
     const dd = data[String(i)] || {};
     const active = medications.filter((m) => isMedActiveOnDay(m, i));
-    if (active.length === 0) return 0;
+    if (active.length === 0) return null; // нет препаратов на этот день
     let total = 0, done = 0;
     active.forEach((m) => {
       total += m.dosesPerDay;
@@ -168,7 +224,7 @@ export default function TreatmentTracker() {
       for (let j = 0; j < m.dosesPerDay; j++) if (arr[j]) done++;
     });
     return total === 0 ? 0 : done / total;
-  });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50 to-white pb-12">
@@ -188,23 +244,29 @@ export default function TreatmentTracker() {
             </span>
           </div>
           <div className="mt-3 flex gap-1">
-            {allDaysProgress.map((p, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentDay(i)}
-                className={`flex-1 h-1.5 rounded-full overflow-hidden transition ${
-                  i === currentDay ? 'ring-2 ring-slate-400 ring-offset-1' : ''
-                }`}
-                aria-label={`День ${i + 1}`}
-              >
-                <div className="w-full h-full bg-slate-200 relative">
-                  <div
-                    className={`h-full transition-all ${p === 1 ? 'bg-emerald-500' : 'bg-slate-400'}`}
-                    style={{ width: `${p * 100}%` }}
-                  />
-                </div>
-              </button>
-            ))}
+            {visibleDays.map((i) => {
+              const p = progressForDay(i);
+              const empty = p === null;
+              return (
+                <button
+                  key={i}
+                  onClick={() => setCurrentDay(i)}
+                  className={`flex-1 h-1.5 rounded-full overflow-hidden transition ${
+                    i === currentDay ? 'ring-2 ring-slate-400 ring-offset-1' : ''
+                  }`}
+                  aria-label={`День ${i + 1}`}
+                >
+                  <div className="w-full h-full bg-slate-200 relative">
+                    {!empty && (
+                      <div
+                        className={`h-full transition-all ${p === 1 ? 'bg-emerald-500' : 'bg-slate-400'}`}
+                        style={{ width: `${p * 100}%` }}
+                      />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -222,7 +284,7 @@ export default function TreatmentTracker() {
 
             <div className="text-center">
               <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">
-                День {currentDay + 1} из {PLAN_DAYS}
+                День {currentDay + 1}
                 {isToday && <span className="ml-1.5 text-emerald-600">• сегодня</span>}
               </div>
               <div className="text-lg font-semibold text-slate-800 leading-tight mt-0.5">
@@ -240,24 +302,42 @@ export default function TreatmentTracker() {
             </button>
           </div>
 
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="text-slate-500">Прогресс дня</span>
-              <span className="font-semibold text-slate-700">
-                {dayCompleted} / {dayTotalDoses}
-              </span>
+          {!isToday && (
+            <div className="mt-3 flex justify-center">
+              <button
+                onClick={() => setCurrentDay(todayIdx)}
+                className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 bg-slate-50 hover:bg-slate-100 rounded-full px-3 py-1 transition"
+              >
+                <CalendarDays className="w-3 h-3" />
+                Перейти к сегодня
+              </button>
             </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full transition-all duration-500 rounded-full ${
-                  dayFullyDone
-                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
-                    : 'bg-gradient-to-r from-slate-400 to-slate-500'
-                }`}
-                style={{ width: `${dayPercent}%` }}
-              />
+          )}
+
+          {dayTotalDoses > 0 ? (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-slate-500">Прогресс дня</span>
+                <span className="font-semibold text-slate-700">
+                  {dayCompleted} / {dayTotalDoses}
+                </span>
+              </div>
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 rounded-full ${
+                    dayFullyDone
+                      ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+                      : 'bg-gradient-to-r from-slate-400 to-slate-500'
+                  }`}
+                  style={{ width: `${dayPercent}%` }}
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-4 text-center text-xs text-slate-400">
+              На этот день процедур не запланировано
+            </div>
+          )}
 
           {dayFullyDone && (
             <div className="mt-3 flex items-center justify-center gap-1.5 text-emerald-600 text-sm font-medium">
