@@ -44,11 +44,10 @@ function buildInfo() {
 const vaccinations = [
   {
     name: 'Nobivac KC',
-    series: 'A159991',
+    series: 'A159D01',
     expiry: '04.2026',
     validFrom: '10.03.2026',
     validUntil: '10.03.2027',
-    note: 'питомниковый кашель',
   },
   {
     name: 'Мультикан-6',
@@ -63,7 +62,6 @@ const vaccinations = [
     expiry: '07.2027',
     validFrom: '10.05.2026',
     validUntil: '10.05.2027',
-    note: 'комплексная',
   },
 ];
 
