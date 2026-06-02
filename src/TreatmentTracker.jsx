@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Check, ChevronLeft, ChevronRight, Droplets, Eye, Syringe, Pill, Tablets, Bone, TestTube, Sparkles, Cloud, CloudOff, CalendarDays } from 'lucide-react';
 import { subscribeToData, saveDataToCloud } from './firebase';
-import Passport from './Passport.jsx';
-import Analyses from './Analyses.jsx';
+import Health from './Health.jsx';
 import Notes from './Notes.jsx';
 import Commands from './Commands.jsx';
 
@@ -272,16 +271,15 @@ export default function TreatmentTracker() {
 
           <div className="mt-3 flex gap-0.5 bg-slate-100 p-1 rounded-full overflow-x-auto">
             {[
-              { key: 'plan',      label: 'План' },
-              { key: 'passport',  label: 'Паспорт' },
-              { key: 'analyses',  label: 'Анализы' },
-              { key: 'notes',     label: 'Заметки' },
-              { key: 'commands',  label: 'Команды' },
+              { key: 'plan',     label: 'План' },
+              { key: 'health',   label: 'Здоровье' },
+              { key: 'notes',    label: 'Заметки' },
+              { key: 'commands', label: 'Команды' },
             ].map((t) => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex-1 text-[11px] font-medium py-1.5 px-2 rounded-full transition whitespace-nowrap ${
+                className={`flex-1 text-xs font-medium py-1.5 px-2 rounded-full transition whitespace-nowrap ${
                   tab === t.key ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
                 }`}
               >
@@ -317,8 +315,7 @@ export default function TreatmentTracker() {
         </div>
       </div>
 
-      {tab === 'passport' && <Passport />}
-      {tab === 'analyses' && <Analyses />}
+      {tab === 'health' && <Health />}
       {tab === 'notes' && <Notes />}
       {tab === 'commands' && <Commands />}
 
