@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, onValue, set } from 'firebase/database';
+import { getDatabase, ref, onValue, set, remove } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -23,4 +23,17 @@ export function subscribeToData(callback) {
 
 export function saveDataToCloud(data) {
   return set(ref(db, DATA_PATH), data);
+}
+
+// Универсальные хелперы для произвольных путей (заметки, команды и т.п.)
+export function subscribePath(path, callback) {
+  return onValue(ref(db, path), (snap) => callback(snap.val() || {}));
+}
+
+export function setPath(path, value) {
+  return set(ref(db, path), value);
+}
+
+export function removePath(path) {
+  return remove(ref(db, path));
 }

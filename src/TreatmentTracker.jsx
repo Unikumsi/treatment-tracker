@@ -3,6 +3,8 @@ import { Check, ChevronLeft, ChevronRight, Droplets, Eye, Syringe, Pill, Tablets
 import { subscribeToData, saveDataToCloud } from './firebase';
 import Passport from './Passport.jsx';
 import Analyses from './Analyses.jsx';
+import Notes from './Notes.jsx';
+import Commands from './Commands.jsx';
 
 const PLAN_START = new Date(2026, 4, 25); // 25 мая 2026
 const PLAN_DAYS = 730; // ~2 года вперёд (для повторяющихся препаратов)
@@ -268,31 +270,24 @@ export default function TreatmentTracker() {
             </span>
           </div>
 
-          <div className="mt-3 flex gap-1 bg-slate-100 p-1 rounded-full">
-            <button
-              onClick={() => setTab('plan')}
-              className={`flex-1 text-xs font-medium py-1.5 rounded-full transition ${
-                tab === 'plan' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
-              }`}
-            >
-              План
-            </button>
-            <button
-              onClick={() => setTab('passport')}
-              className={`flex-1 text-xs font-medium py-1.5 rounded-full transition ${
-                tab === 'passport' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
-              }`}
-            >
-              Паспорт
-            </button>
-            <button
-              onClick={() => setTab('analyses')}
-              className={`flex-1 text-xs font-medium py-1.5 rounded-full transition ${
-                tab === 'analyses' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
-              }`}
-            >
-              Анализы
-            </button>
+          <div className="mt-3 flex gap-0.5 bg-slate-100 p-1 rounded-full overflow-x-auto">
+            {[
+              { key: 'plan',      label: 'План' },
+              { key: 'passport',  label: 'Паспорт' },
+              { key: 'analyses',  label: 'Анализы' },
+              { key: 'notes',     label: 'Заметки' },
+              { key: 'commands',  label: 'Команды' },
+            ].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex-1 text-[11px] font-medium py-1.5 px-2 rounded-full transition whitespace-nowrap ${
+                  tab === t.key ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
 
           {tab === 'plan' && (
@@ -324,6 +319,8 @@ export default function TreatmentTracker() {
 
       {tab === 'passport' && <Passport />}
       {tab === 'analyses' && <Analyses />}
+      {tab === 'notes' && <Notes />}
+      {tab === 'commands' && <Commands />}
 
       {tab === 'plan' && <div className="max-w-md mx-auto px-4">
         <div className="mt-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
