@@ -2,6 +2,74 @@ import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 const analyses = [
   {
+    title: 'Отодектоз (ушной клещ)',
+    number: '№ 000004176',
+    date: '21.06.2026',
+    clinic: 'Берлога',
+    lab: 'Берлога',
+    doctor: 'Артюшина Е.А.',
+    results: [
+      {
+        metric: 'Otodectes (имаго и яйца)',
+        method: 'соскоб из наружных слуховых проходов',
+        value: 'не выявлены',
+        abnormal: false,
+      },
+    ],
+    abnormal: false,
+  },
+  {
+    title: 'Лямблиоз (ПЦР)',
+    number: 'ИНЗ 359545144',
+    date: '17.06.2026',
+    clinic: 'Vet Union',
+    lab: 'Vet Union',
+    doctor: '—',
+    results: [
+      {
+        metric: 'Giardia lamblia spp.',
+        method: 'ПЦР',
+        value: 'не обнаружено',
+        abnormal: false,
+      },
+    ],
+    abnormal: false,
+  },
+  {
+    title: 'Лямблиоз',
+    number: '№ 000025048',
+    date: '15.06.2026',
+    clinic: 'Dr.Hug',
+    lab: 'Dr.Hug',
+    doctor: 'Дашко М.И.',
+    results: [
+      {
+        metric: 'Giardia Ag',
+        method: 'ИХА, смыв ректальный / кал',
+        value: 'антиген не обнаружен',
+        abnormal: false,
+      },
+    ],
+    abnormal: false,
+  },
+  {
+    title: 'Лямблиоз',
+    number: '№ 000023819',
+    date: '07.06.2026',
+    clinic: 'Dr.Hug',
+    lab: 'Dr.Hug',
+    doctor: 'Булатова Е.С.',
+    results: [
+      {
+        metric: 'Giardia Ag',
+        method: 'ИХА, смыв ректальный / кал',
+        value: 'антиген не обнаружен',
+        abnormal: false,
+      },
+    ],
+    abnormal: false,
+  },
+  {
     title: 'Паразитология',
     number: '№ 260511997',
     date: '27.05.2026',
