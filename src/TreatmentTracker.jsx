@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Check, ChevronLeft, ChevronRight, Droplets, Eye, Syringe, Pill, Tablets, Bone, TestTube, Sparkles, Cloud, CloudOff, CalendarDays } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Droplets, Eye, Syringe, Pill, Tablets, Bone, TestTube, Baby, SprayCan, Sparkles, Cloud, CloudOff, CalendarDays } from 'lucide-react';
 import { subscribeToData, saveDataToCloud } from './firebase';
 import Health from './Health.jsx';
 import Notes from './Notes.jsx';
@@ -62,18 +62,6 @@ const medications = [
     color: 'rose',
   },
   {
-    id: 6,
-    name: 'Мильбимакс',
-    detail: 'Антигельминтик, 1 таблетка',
-    note: 'Повторять каждые 3 месяца',
-    dosesPerDay: 1,
-    startDay: 12, // 6 июня 2026 (через 10 дней от 27 мая)
-    durationDays: 1,
-    recurMonths: 3,
-    icon: Bone,
-    color: 'violet',
-  },
-  {
     id: 7,
     name: 'Анализ',
     detail: 'Сдать анализ',
@@ -82,6 +70,92 @@ const medications = [
     durationDays: 1,
     icon: TestTube,
     color: 'teal',
+  },
+
+  // --- План от 21.06.2026 (клиника «Берлога») ---
+  {
+    id: 8,
+    name: 'Мильбемакс',
+    detail: 'Для щенков, вет. препарат, 1 таблетка',
+    note: 'Повторять каждые 3 месяца',
+    dosesPerDay: 1,
+    startDay: 27, // 21.06.2026
+    durationDays: 1,
+    recurMonths: 3,
+    icon: Bone,
+    color: 'violet',
+  },
+  {
+    id: 9,
+    name: 'Энтерофурил',
+    detail: 'Сироп 200 мг/5 мл, по 0,7 мл',
+    dosesPerDay: 3,
+    startDay: 28, // с 22.06.2026
+    durationDays: 5,
+    icon: Pill,
+    color: 'amber',
+  },
+  {
+    id: 10,
+    name: 'Эспумизан Baby',
+    detail: 'По 2 капли',
+    dosesPerDay: 3,
+    startDay: 28, // с 22.06.2026
+    durationDays: 3,
+    icon: Baby,
+    color: 'teal',
+  },
+  {
+    id: 11,
+    name: 'Зодак',
+    detail: 'Капли 10 мг/мл, по 0,2 мл',
+    dosesPerDay: 1,
+    startDay: 28, // с 22.06.2026
+    durationDays: 10,
+    icon: Syringe,
+    color: 'rose',
+  },
+  {
+    id: 12,
+    name: 'ПроКолин',
+    detail: 'Повторный курс, по 1 мл',
+    note: 'Начать через 5 дней после старта',
+    dosesPerDay: 1,
+    startDay: 33, // через 5 дней после 22.06 → 27.06.2026
+    durationDays: 10,
+    icon: Pill,
+    color: 'emerald',
+  },
+  {
+    id: 13,
+    name: 'Промывание глаз',
+    detail: 'Физ. раствор, от внешнего к внутреннему уголку',
+    note: 'После 10 дней — 1–2 раза в день',
+    dosesPerDay: 4,
+    startDay: 28, // с 22.06.2026
+    durationDays: 10,
+    icon: Droplets,
+    color: 'sky',
+  },
+  {
+    id: 14,
+    name: 'Данцил',
+    detail: 'Глазные капли, по 1 капле в каждый глаз',
+    dosesPerDay: 3,
+    startDay: 28, // с 22.06.2026
+    durationDays: 10,
+    icon: Eye,
+    color: 'indigo',
+  },
+  {
+    id: 15,
+    name: 'Адвантикс',
+    detail: 'Капли на холку',
+    note: 'Раз в месяц',
+    dosesPerDay: 1,
+    days: [38, 69], // 02.07.2026 и 02.08.2026
+    icon: SprayCan,
+    color: 'violet',
   },
 ];
 
@@ -119,9 +193,12 @@ function formatWeekday(d) {
 }
 
 function isMedActiveOnDay(med, dayIndex) {
+  // Конкретные дни (например, Адвантикс по двум датам)
+  if (med.days) return med.days.includes(dayIndex);
+
   if (dayIndex < med.startDay) return false;
 
-  // Повторение по месяцам (например, Мильбимакс каждые 3 месяца)
+  // Повторение по месяцам (например, Мильбемакс каждые 3 месяца)
   if (med.recurMonths) {
     const dayDate = addDays(PLAN_START, dayIndex);
     const startDate = addDays(PLAN_START, med.startDay);
